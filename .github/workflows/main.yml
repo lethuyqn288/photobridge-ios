@@ -19,10 +19,11 @@ jobs:
     - name: Show Xcode version
       run: xcodebuild -version
 
-    # Tạo Xcode project bằng script (không cần file .xcodeproj có sẵn)
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
     - name: Generate Xcode project
       run: |
-        cd PhotoBridge
         cat > project.yml << 'YAML'
         name: PhotoBridge
         options:
@@ -34,7 +35,7 @@ jobs:
             type: application
             platform: iOS
             sources:
-              - PhotoBridge
+              - path: PhotoBridge
             info:
               path: PhotoBridge/Info.plist
             settings:
@@ -47,18 +48,10 @@ jobs:
                 CODE_SIGNING_REQUIRED: NO
                 CODE_SIGNING_ALLOWED: NO
         YAML
-
-    - name: Install XcodeGen
-      run: brew install xcodegen
-
-    - name: Generate .xcodeproj
-      run: |
-        cd PhotoBridge
         xcodegen generate
 
     - name: Build (no signing)
       run: |
-        cd PhotoBridge
         xcodebuild \
           -project PhotoBridge.xcodeproj \
           -scheme PhotoBridge \
@@ -73,7 +66,6 @@ jobs:
 
     - name: Package IPA (unsigned)
       run: |
-        cd PhotoBridge
         mkdir -p Payload
         cp -r build/Release-iphoneos/PhotoBridge.app Payload/
         zip -r PhotoBridge_unsigned.ipa Payload
@@ -83,5 +75,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PhotoBridge_unsigned
-        path: PhotoBridge/PhotoBridge_unsigned.ipa
+        path: PhotoBridge_unsigned.ipa
         retention-days: 90
